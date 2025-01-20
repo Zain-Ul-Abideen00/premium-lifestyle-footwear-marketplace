@@ -7,27 +7,37 @@
 ### **System Architecture Diagram**
 ```mermaid
 graph TB
-    subgraph "Frontend (Next.js)"
-        UI[User Interface]
-        COMP[UI Components]
-        HOOKS[Custom Hooks]
+
+    %% Define classes with fill colors
+    classDef frontend fill:#64B5F6, stroke:#336699, color:black
+    classDef backend fill:#FFA726, stroke:#CC6600, color:black
+    classDef thirdParty fill:#90A4AE, stroke:#666666, color:black
+
+    %% Frontend subgraph
+    subgraph Frontend[Next.js]
+        UI[User Interface]:::frontend
+        COMP[UI Components]:::frontend
+        HOOKS[Custom Hooks]:::frontend
     end
 
-    subgraph "Backend Services"
-        SANITY[Sanity CMS]
-        subgraph "Third-Party APIs"
-            STRIPE[Stripe Payment]
-            SHIPPING[Shipping Provider API]
-            NEXTAUTH[Next-Auth]
-            CDN[Image CDN]
-        end
+    %% Backend Services subgraph
+    subgraph Backend Services
+        SANITY[Sanity CMS]:::backend
     end
 
+    %% Third-Party APIs subgraph
+    subgraph Third-Party APIs
+        STRIPE[Stripe Payment]:::thirdParty
+        SHIPPING[Shipping Provider API]:::thirdParty
+        NEXTAUTH[Next-Auth]:::thirdParty
+        CDN[Image CDN]:::thirdParty
+    end
+
+    %% Interactions
     UI -->|Browse Products| COMP
     COMP -->|Fetch Data| SANITY
     SANITY -->|Return Product Data| COMP
     COMP -->|Display Products| UI
-
     UI -->|Place Order| HOOKS
     HOOKS -->|Send Order Data| SANITY
     SANITY -->|Record Order| HOOKS
@@ -36,14 +46,8 @@ graph TB
     HOOKS -->|Process Payment| STRIPE
     STRIPE -->|Payment Confirmation| HOOKS
     HOOKS -->|Display Confirmation| UI
-
-    classDef frontend fill:#2563eb,stroke:#1e40af,color:white
-    classDef backend fill:#4f46e5,stroke:#3730a3,color:white
-    classDef thirdParty fill:#9333ea,stroke:#6b21a8,color:white
-
-    class UI,COMP,HOOKS frontend
-    class SANITY backend
-    class STRIPE,SHIPPING,NEXTAUTH,CDN thirdParty
+    COMP -->|Fetch Images| CDN
+    CDN -->|Provide Images| COMP
 ```
 
 ### **Component Roles**
@@ -70,7 +74,7 @@ sequenceDiagram
     participant F as Frontend
     participant A as API
     participant S as Sanity CMS
-    participant Auth as Next-Auth
+    participant Auth as Auth Provider
 
     U->>F: Visits registration page
     F->>A: Submit registration data
@@ -80,6 +84,10 @@ sequenceDiagram
     S-->>A: Confirm storage
     A-->>F: Return success response
     F-->>U: Show confirmation
+
+    Note over U,F: User receives welcome email
+    Note over A,S: User data stored securely
+    Note over Auth: Authentication token generated
 ```
 
 ### **Product Browsing**
