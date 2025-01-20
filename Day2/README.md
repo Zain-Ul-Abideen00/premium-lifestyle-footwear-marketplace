@@ -1,4 +1,4 @@
-# **Marketplace Technical Foundation - Premium Lifestyle & Footwear Marketplace**
+# **Marketplace Technical Foundation - Steplo**
 
 ---
 
@@ -176,10 +176,6 @@ sequenceDiagram
 | `/api/products/{id}`  | `GET`      | Fetch details of a specific product.     | `{ "id": "123", "name": "Running Shoes", "price": 120, "stock": 50, "image": "..." }`  |
 | `/api/orders`         | `POST`     | Create a new order.                      | `{ "orderId": "ORD123", "status": "Success", "message": "Order created successfully." }` |
 | `/api/shipment`       | `GET`      | Track order status.                      | `{ "shipmentId": "SHIP123", "status": "In Transit", "expectedDeliveryDate": "..." }`    |
-
----
-
-You're absolutely right! Let’s expand the **Sanity Schema** section to include **Orders**, **Customers**, and other relevant entities. This will ensure that all data required for the **Premium Lifestyle & Footwear Marketplace** is properly defined and stored in Sanity CMS.
 
 ---
 
@@ -501,21 +497,35 @@ export default {
 
 ---
 
-### **Key Relationships**
-- **Customers** place **Orders**.
-- **Orders** contain **Products**.
-- **Products** belong to **Categories**.
-- **Inventory** tracks stock levels for **Products**.
-- **Shipments** are linked to **Orders**.
+## 6. Technical Roadmap
 
----
+### Phase 1: Core Features
+- **Frontend**:
+  - Implement essential pages: Home, Product Listing, Product Details, Cart, Checkout.
+  - Add responsive design for mobile and desktop.
+- **Backend**:
+  - Set up Sanity CMS for product and order management.
+  - Integrate Stripe for payment processing.
+- **APIs**:
+  - Implement `/api/products` and `/api/orders` endpoints.
 
-### **Summary of Schemas**
-1. **Product Schema**: Manages product details, variants, and stock.
-2. **Order Schema**: Tracks customer orders, payment status, and shipping details.
-3. **Customer Schema**: Stores customer profiles, preferences, and order history.
-4. **Category Schema**: Organizes products into categories (e.g., Athletic, Casual).
-5. **Inventory Schema**: Tracks stock levels, size distribution, and restock dates.
-6. **Shipment Schema**: Manages shipment tracking and delivery status.
+### Phase 2: Enhanced Features
+- **Frontend**:
+  - Add advanced features: size selection, color variants, related products.
+  - Implement user dashboard for order tracking.
+- **Backend**:
+  - Add inventory management and low stock alerts.
+  - Integrate shipment tracking API.
+- **APIs**:
+  - Implement `/api/shipment` and `/api/users` endpoints.
 
----
+### Phase 3: Optimization and Launch
+- **Performance**:
+  - Optimize images and enable caching.
+  - Use Next.js’s built-in optimizations.
+- **SEO**:
+  - Add meta tags and structured data.
+- **Testing**:
+  - Test for usability, performance, and security.
+- **Launch**:
+  - Deploy on Vercel and monitor performance.

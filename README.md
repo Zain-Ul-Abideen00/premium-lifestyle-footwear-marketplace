@@ -1,4 +1,5 @@
-# Premium Lifestyle & Footwear Marketplace
+# Steplo
+**Premium Lifestyle & Footwear Marketplace**
 
 ## Overview
 This repository contains the submission for the **7-day hackathon** for the **Premium Lifestyle & Footwear Marketplace**. It includes:
@@ -11,9 +12,9 @@ This repository contains the submission for the **7-day hackathon** for the **Pr
 - **Documentation/**: Detailed technical documentation for the project.
 
 ## How to Navigate
-1. **Day 1 Submission**: See [Day1/Day1.md](Day1/Day1.md).
-2. **Day 2 Submission**: See [Day2/Day2.md](Day2/Day2.md).
-3. **Technical Documentation**: See the [Documentation/](Documentation/) folder.
+1. **Day 1 Submission**: See [Day1/Day1.md](Day1/README.md).
+2. **Day 2 Submission**: See [Day2/Day2.md](Day2/README.md).
+3. **Technical Documentation**: See the [Documentation/](Day2/Detailed%20Documentation/) folder.
 
 ## Diagrams
 - **Day 1 Diagrams**: [Day1/diagrams/](Day1/diagrams/)
