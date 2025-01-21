@@ -1,196 +1,325 @@
-## **3. Plan API Requirements**
+# API Requirements
 
-### **API Endpoints**
+## 1. Authentication APIs (Supabase)
 
-1. **Products API**:
-   - **Endpoint Name**: `/api/products`
-     - **Method**: `GET`
-     - **Description**: Fetch all available products from Sanity CMS.
-     - **Response**:
-       ```json
-       [
-         {
-           "id": "123",
-           "name": "Premium Running Shoes",
-           "price": 120,
-           "stock": 50,
-           "image": "https://cdn.example.com/shoes.jpg",
-           "category": "Athletic",
-           "sizes": ["7", "8", "9"],
-           "colors": ["Black", "White"]
-         },
-         {
-           "id": "456",
-           "name": "Casual Sneakers",
-           "price": 80,
-           "stock": 30,
-           "image": "https://cdn.example.com/sneakers.jpg",
-           "category": "Casual",
-           "sizes": ["8", "9", "10"],
-           "colors": ["Blue", "Gray"]
-         }
-       ]
-       ```
+### User Management
 
-   - **Endpoint Name**: `/api/products/{id}`
-     - **Method**: `GET`
-     - **Description**: Fetch details of a specific product by ID.
-     - **Response**:
-       ```json
-       {
-         "id": "123",
-         "name": "Premium Running Shoes",
-         "price": 120,
-         "stock": 50,
-         "image": "https://cdn.example.com/shoes.jpg",
-         "description": "High-performance running shoes for athletes.",
-         "category": "Athletic",
-         "sizes": ["7", "8", "9"],
-         "colors": ["Black", "White"]
-       }
-       ```
+```typescript
+// Sign Up
+POST /auth/signup
+{
+  "email": "string",
+  "password": "string",
+  "metadata": {
+    "full_name": "string",
+    "phone": "string"
+  }
+}
 
-   - **Endpoint Name**: `/api/products/search`
-     - **Method**: `POST`
-     - **Description**: Search products by name, category, or filters (e.g., price range, size, color).
-     - **Payload**:
-       ```json
-       {
-         "query": "Running Shoes",
-         "filters": {
-           "category": "Athletic",
-           "priceRange": { "min": 100, "max": 150 },
-           "size": "8",
-           "color": "Black"
-         }
-       }
-       ```
-     - **Response**:
-       ```json
-       [
-         {
-           "id": "123",
-           "name": "Premium Running Shoes",
-           "price": 120,
-           "stock": 50,
-           "image": "https://cdn.example.com/shoes.jpg",
-           "category": "Athletic",
-           "sizes": ["7", "8", "9"],
-           "colors": ["Black", "White"]
-         }
-       ]
-       ```
+// Sign In
+POST /auth/signin
+{
+  "email": "string",
+  "password": "string"
+}
 
-2. **Orders API**:
-   - **Endpoint Name**: `/api/orders`
-     - **Method**: `POST`
-     - **Description**: Create a new order in Sanity CMS.
-     - **Payload**:
-       ```json
-       {
-         "customerId": "789",
-         "products": [
-           {
-             "id": "123",
-             "name": "Premium Running Shoes",
-             "price": 120,
-             "quantity": 1,
-             "size": "8",
-             "color": "Black"
-           }
-         ],
-         "paymentStatus": "Paid",
-         "shippingAddress": "123 Main St, City, Country",
-         "shippingMethod": "Standard"
-       }
-       ```
-     - **Response**:
-       ```json
-       {
-         "orderId": "ORD123",
-         "status": "Success",
-         "message": "Order created successfully."
-       }
-       ```
+// Social Auth
+GET /auth/signin/:provider
+```
 
-   - **Endpoint Name**: `/api/orders/{id}`
-     - **Method**: `GET`
-     - **Description**: Fetch details of a specific order by ID.
-     - **Response**:
-       ```json
-       {
-         "orderId": "ORD123",
-         "customerId": "789",
-         "products": [
-           {
-             "id": "123",
-             "name": "Premium Running Shoes",
-             "price": 120,
-             "quantity": 1,
-             "size": "8",
-             "color": "Black"
-           }
-         ],
-         "paymentStatus": "Paid",
-         "shippingAddress": "123 Main St, City, Country",
-         "shippingMethod": "Standard",
-         "orderDate": "2023-10-15T12:00:00Z",
-         "deliveryETA": "2023-10-20T12:00:00Z"
-       }
-       ```
+### Session Management
 
-3. **Shipment API**:
-   - **Endpoint Name**: `/api/shipment`
-     - **Method**: `GET`
-     - **Description**: Track order status via a third-party shipping provider API.
-     - **Response**:
-       ```json
-       {
-         "shipmentId": "SHIP123",
-         "orderId": "ORD123",
-         "status": "In Transit",
-         "expectedDeliveryDate": "2023-10-20T12:00:00Z",
-         "trackingUrl": "https://tracking.example.com/SHIP123"
-       }
-       ```
+```typescript
+// Get User Session
+GET / auth / session;
 
-4. **User API**:
-   - **Endpoint Name**: `/api/users/register`
-     - **Method**: `POST`
-     - **Description**: Register a new user.
-     - **Payload**:
-       ```json
-       {
-         "name": "John Doe",
-         "email": "john.doe@example.com",
-         "password": "securepassword123",
-         "address": "123 Main St, City, Country",
-         "phone": "+1234567890"
-       }
-       ```
-     - **Response**:
-       ```json
-       {
-         "userId": "789",
-         "status": "Success",
-         "message": "User registered successfully."
-       }
-       ```
+// Refresh Token
+POST / auth / refresh;
 
-   - **Endpoint Name**: `/api/users/profile`
-     - **Method**: `GET`
-     - **Description**: Fetch user profile details.
-     - **Response**:
-       ```json
-       {
-         "userId": "789",
-         "name": "John Doe",
-         "email": "john.doe@example.com",
-         "address": "123 Main St, City, Country",
-         "phone": "+1234567890",
-         "sizePreferences": ["8", "9"],
-         "stylePreferences": ["Athletic", "Casual"]
-       }
-       ```
+// Sign Out
+POST / auth / signout;
+```
+
+## 2. Product APIs
+
+### Content APIs (Sanity)
+
+```typescript
+// Get All Products
+GET /api/products
+Response: {
+  products: [{
+    id: string,
+    name: string,
+    description: string,
+    images: string[],
+    features: string[],
+    supabaseProductId: string
+  }]
+}
+
+// Get Single Product
+GET /api/products/:slug
+Response: {
+  product: {
+    id: string,
+    name: string,
+    description: string,
+    images: string[],
+    features: string[],
+    supabaseProductId: string
+  }
+}
+```
+
+### Operational APIs (Supabase)
+
+```typescript
+// Get Product Stock
+GET /rest/v1/product_variants
+?product_id=eq.:id
+&select=size,color,stock_quantity,price
+
+// Subscribe to Stock Updates
+const subscription = supabase
+  .from('product_variants')
+  .on('UPDATE', payload => {
+    // Handle stock update
+  })
+  .subscribe()
+```
+
+## 3. Cart APIs (Supabase)
+
+### Cart Management
+
+```typescript
+// Add to Cart
+POST /rest/v1/cart_items
+{
+  "user_id": "string",
+  "variant_id": "string",
+  "quantity": number
+}
+
+// Update Cart Item
+PATCH /rest/v1/cart_items
+?user_id=eq.:user_id
+&variant_id=eq.:variant_id
+{
+  "quantity": number
+}
+
+// Remove from Cart
+DELETE /rest/v1/cart_items
+?user_id=eq.:user_id
+&variant_id=eq.:variant_id
+
+// Get Cart Items
+GET /rest/v1/cart_items
+?user_id=eq.:user_id
+&select=*,product_variants(*)
+```
+
+### Real-time Cart Updates
+
+```typescript
+// Subscribe to Cart Changes
+const subscription = supabase
+  .from("cart_items")
+  .on("*", (payload) => {
+    // Handle cart update
+  })
+  .subscribe();
+```
+
+## 4. Order APIs (Supabase)
+
+### Order Management
+
+```typescript
+// Create Order
+POST /rest/v1/orders
+{
+  "user_id": "string",
+  "total_amount": number,
+  "shipping_address": {
+    "address": "string",
+    "city": "string",
+    "postal_code": "string"
+  }
+}
+
+// Get Order Details
+GET /rest/v1/orders
+?user_id=eq.:user_id
+&select=*,order_items(*)
+
+// Update Order Status
+PATCH /rest/v1/orders
+?id=eq.:order_id
+{
+  "status": "string"
+}
+```
+
+### Order Tracking
+
+```typescript
+// Subscribe to Order Updates
+const subscription = supabase
+  .from("orders")
+  .on("UPDATE", (payload) => {
+    // Handle order status update
+  })
+  .subscribe();
+```
+
+## 5. Payment APIs (Stripe)
+
+### Payment Processing
+
+```typescript
+// Create Payment Intent
+POST /api/create-payment-intent
+{
+  "amount": number,
+  "currency": "string"
+}
+
+// Confirm Payment
+POST /api/confirm-payment
+{
+  "payment_intent_id": "string"
+}
+```
+
+## 6. Shipping APIs
+
+### Shipping Calculations
+
+```typescript
+// Get Shipping Rates
+POST /api/shipping/calculate
+{
+  "items": [{
+    "weight": number,
+    "dimensions": {
+      "length": number,
+      "width": number,
+      "height": number
+    }
+  }],
+  "destination": {
+    "postal_code": "string",
+    "country": "string"
+  }
+}
+```
+
+### Tracking
+
+```typescript
+// Get Tracking Info
+GET /api/shipping/track/:tracking_number
+Response: {
+  status: string,
+  estimated_delivery: string,
+  tracking_events: [{
+    status: string,
+    location: string,
+    timestamp: string
+  }]
+}
+```
+
+## 7. Real-time Subscriptions (Supabase)
+
+### Product Updates
+
+```typescript
+// Stock Level Changes
+const subscription = supabase
+  .from("product_variants")
+  .on("UPDATE", (payload) => {
+    // Handle stock update
+  })
+  .subscribe();
+```
+
+### Cart Sync
+
+```typescript
+// Cart Changes
+const subscription = supabase
+  .from("cart_items")
+  .on("*", (payload) => {
+    // Handle cart update
+  })
+  .subscribe();
+```
+
+### Order Updates
+
+```typescript
+// Order Status Changes
+const subscription = supabase
+  .from("orders")
+  .on("UPDATE", (payload) => {
+    // Handle order update
+  })
+  .subscribe();
+```
+
+## 8. Security Requirements
+
+### Authentication
+
+- JWT token required for authenticated endpoints
+- Row Level Security policies for database access
+- Rate limiting for API endpoints
+
+### Data Validation
+
+```sql
+-- Example RLS Policy
+CREATE POLICY "Users can only access their own cart"
+ON cart_items
+FOR ALL
+USING (auth.uid() = user_id);
+```
+
+### Error Handling
+
+```typescript
+// Standard Error Response
+{
+  "error": {
+    "code": "string",
+    "message": "string",
+    "details": {}
+  }
+}
+```
+
+## 9. Performance Requirements
+
+### Caching
+
+- Client-side caching with React Query
+- CDN caching for static content
+- Database query optimization
+
+### Rate Limiting
+
+```typescript
+interface RateLimitHeaders {
+  "X-RateLimit-Limit": number;
+  "X-RateLimit-Remaining": number;
+  "X-RateLimit-Reset": number;
+}
+```
 
 ---
+
+_Updated to include Supabase integration - NextJS Design JAM 2025_

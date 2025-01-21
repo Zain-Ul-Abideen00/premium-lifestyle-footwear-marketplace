@@ -5,6 +5,7 @@
 ## **1. System Architecture Overview**
 
 ### **System Architecture Diagram**
+
 ```mermaid
 graph TB
 
@@ -12,528 +13,256 @@ graph TB
     classDef frontend fill:#64B5F6, stroke:#336699, color:black
     classDef backend fill:#FFA726, stroke:#CC6600, color:black
     classDef thirdParty fill:#90A4AE, stroke:#666666, color:black
+    classDef supabase fill:#3ECF8E, stroke:#2EA97D, color:black
 
     %% Frontend subgraph
-    subgraph Frontend[Next.js]
+    subgraph Frontend[Next.js Frontend]
         UI[User Interface]:::frontend
         COMP[UI Components]:::frontend
         HOOKS[Custom Hooks]:::frontend
     end
 
     %% Backend Services subgraph
-    subgraph Backend Services
+    subgraph Backend[Backend Services]
         SANITY[Sanity CMS]:::backend
+        subgraph Supabase[Supabase]
+            AUTH[Authentication]:::supabase
+            DB[Database]:::supabase
+            REALTIME[Real-time Engine]:::supabase
+        end
     end
 
     %% Third-Party APIs subgraph
-    subgraph Third-Party APIs
+    subgraph ThirdParty[Third-Party Services]
         STRIPE[Stripe Payment]:::thirdParty
         SHIPPING[Shipping Provider API]:::thirdParty
-        NEXTAUTH[Next-Auth]:::thirdParty
         CDN[Image CDN]:::thirdParty
     end
 
     %% Interactions
     UI -->|Browse Products| COMP
-    COMP -->|Fetch Data| SANITY
-    SANITY -->|Return Product Data| COMP
-    COMP -->|Display Products| UI
+    COMP -->|Fetch Content| SANITY
+    COMP -->|Real-time Updates| REALTIME
+    HOOKS -->|Auth Operations| AUTH
+    HOOKS -->|CRUD Operations| DB
+    SANITY -->|Content Data| COMP
+    DB -->|User/Order Data| COMP
+    REALTIME -->|Live Updates| COMP
     UI -->|Place Order| HOOKS
-    HOOKS -->|Send Order Data| SANITY
-    SANITY -->|Record Order| HOOKS
-    HOOKS -->|Fetch Tracking| SHIPPING
-    SHIPPING -->|Return Tracking Info| HOOKS
     HOOKS -->|Process Payment| STRIPE
     STRIPE -->|Payment Confirmation| HOOKS
-    HOOKS -->|Display Confirmation| UI
-    COMP -->|Fetch Images| CDN
-    CDN -->|Provide Images| COMP
+    HOOKS -->|Track Shipment| SHIPPING
+    SHIPPING -->|Delivery Updates| HOOKS
+    COMP -->|Load Images| CDN
+    CDN -->|Optimized Images| COMP
 ```
 
 ### **Component Roles**
+
 - **Frontend (Next.js)**:
   - **User Interface (UI)**: The visual layer where users interact with the marketplace.
   - **UI Components**: Reusable components for product listings, cart, checkout, etc.
   - **Custom Hooks**: Handle API requests, state management, and data fetching.
 - **Backend Services**:
   - **Sanity CMS**: Manages product data, customer details, and order records.
+  - **Supabase**: Manages user authentication, real-time database, and order management.
   - **Third-Party APIs**:
     - **Stripe Payment**: Processes payments securely.
     - **Shipping Provider API**: Provides real-time shipment tracking.
-    - **Next-Auth**: Handles user authentication.
     - **Image CDN**: Optimizes image delivery for faster loading.
 
 ---
 
 ## **2. Key Workflows**
 
-### **User Registration**
+### **User Registration & Authentication (Supabase)**
+
 ```mermaid
 sequenceDiagram
     participant U as User
     participant F as Frontend
-    participant A as API
-    participant S as Sanity CMS
-    participant Auth as Auth Provider
+    participant S as Supabase Auth
+    participant D as Supabase DB
 
     U->>F: Visits registration page
-    F->>A: Submit registration data
-    A->>Auth: Validate credentials
-    Auth-->>A: Return auth token
-    A->>S: Store user profile
-    S-->>A: Confirm storage
-    A-->>F: Return success response
+    F->>S: Submit registration data
+    S-->>F: Return auth token
+    F->>D: Create user profile
+    D-->>F: Confirm storage
     F-->>U: Show confirmation
 
     Note over U,F: User receives welcome email
-    Note over A,S: User data stored securely
-    Note over Auth: Authentication token generated
+    Note over S: JWT token generated
+    Note over D: Profile stored in Supabase
 ```
 
-### **Product Browsing**
+### **Product Browsing (Sanity + Supabase)**
+
 ```mermaid
 sequenceDiagram
     participant U as User
     participant F as Frontend
-    participant A as API
     participant S as Sanity CMS
+    participant D as Supabase DB
 
-    U->>F: Visits product listing page
-    F->>A: Fetch product data
-    A->>S: Query products
-    S-->>A: Return product data
-    A-->>F: Display products
-    F-->>U: Show product listings
+    U->>F: Visits product listing
+    F->>S: Fetch product content
+    S-->>F: Return content data
+    F->>D: Fetch real-time stock
+    D-->>F: Return stock levels
+    F-->>U: Display products
+
+    Note over D,F: Real-time stock updates
 ```
 
-### **Order Placement**
+### **Order Processing (Supabase + Stripe)**
+
 ```mermaid
 sequenceDiagram
     participant U as User
     participant F as Frontend
-    participant A as API
-    participant S as Sanity CMS
+    participant D as Supabase DB
     participant STRIPE as Stripe
     participant SHIP as Shipping Provider
 
     U->>F: Adds items to cart
-    F->>A: Send order details
-    A->>S: Record order
-    S-->>A: Confirm order
-    A->>STRIPE: Process payment
-    STRIPE-->>A: Payment confirmation
-    A->>SHIP: Initiate shipment
-    SHIP-->>A: Return tracking ID
-    A-->>F: Display confirmation
-    F-->>U: Show order summary
-```
-
-### **Shipment Tracking**
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant A as API
-    participant SHIP as Shipping Provider
-
-    U->>F: Visits order tracking page
-    F->>A: Fetch tracking info
-    A->>SHIP: Query shipment status
-    SHIP-->>A: Return tracking details
-    A-->>F: Display tracking info
-    F-->>U: Show shipment status
+    F->>D: Update cart (real-time)
+    D-->>F: Confirm update
+    U->>F: Checkout
+    F->>STRIPE: Process payment
+    STRIPE-->>F: Payment confirmation
+    F->>D: Create order
+    F->>SHIP: Initiate shipment
+    SHIP-->>F: Return tracking
+    F-->>U: Show confirmation
 ```
 
 ---
 
-## **3. Category-Specific Instructions**
+## **3. API Implementation**
 
-### **General eCommerce**
-- **Workflows**:
-  - **Product Browsing**: Users can filter products by category, size, price range, and color.
-  - **Cart Management**: Users can add/remove items, update quantities, and apply discounts.
-  - **Order Placement**: Users can place orders, select shipping methods, and make payments.
-- **Example Endpoint**:
-  - **Endpoint**: `/api/products`
-  - **Method**: `GET`
-  - **Purpose**: Fetch all product details.
-  - **Response Example**:
-    ```json
-    [
-      {
-        "id": "123",
-        "name": "Premium Running Shoes",
-        "price": 120,
-        "stock": 50,
-        "image": "https://cdn.example.com/shoes.jpg",
-        "category": "Athletic",
-        "sizes": ["7", "8", "9"],
-        "colors": ["Black", "White"]
-      }
-    ]
-    ```
+### **Authentication (Supabase)**
 
----
+```typescript
+// Initialize Supabase client
+import { createClient } from "@supabase/supabase-js";
 
-## **4. API Endpoints**
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
-### **API Specification**
-| **Endpoint**         | **Method** | **Description**                          | **Response Example**                                                                 |
-|-----------------------|------------|------------------------------------------|-------------------------------------------------------------------------------------|
-| `/api/products`       | `GET`      | Fetch all products.                      | `[{ "id": "123", "name": "Running Shoes", "price": 120, "stock": 50, "image": "..." }]` |
-| `/api/products/{id}`  | `GET`      | Fetch details of a specific product.     | `{ "id": "123", "name": "Running Shoes", "price": 120, "stock": 50, "image": "..." }`  |
-| `/api/orders`         | `POST`     | Create a new order.                      | `{ "orderId": "ORD123", "status": "Success", "message": "Order created successfully." }` |
-| `/api/shipment`       | `GET`      | Track order status.                      | `{ "shipmentId": "SHIP123", "status": "In Transit", "expectedDeliveryDate": "..." }`    |
+// Sign up
+const signUp = async (email: string, password: string) => {
+  const { user, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+};
 
----
+// Sign in
+const signIn = async (email: string, password: string) => {
+  const { user, error } = await supabase.auth.signIn({
+    email,
+    password,
+  });
+};
+```
 
-## **5. Sanity Schema**
+### **Product Management (Sanity + Supabase)**
 
-### **Product Schema**
-```javascript
-export default {
-  name: 'product',
-  title: 'Product',
-  type: 'document',
-  fields: [
-    {
-      name: 'name',
-      title: 'Name',
-      type: 'string',
-    },
-    {
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
-      options: {
-        source: 'name'
-      }
-    },
-    {
-      name: 'category',
-      title: 'Category',
-      type: 'reference',
-      to: [{type: 'category'}]
-    },
-    {
-      name: 'variants',
-      title: 'Variants',
-      type: 'array',
-      of: [{
-        type: 'object',
-        fields: [
-          {name: 'color', type: 'string'},
-          {name: 'size', type: 'string'},
-          {name: 'stock', type: 'number'},
-          {name: 'images', type: 'array', of: [{type: 'image'}]}
-        ]
-      }]
-    },
-    {
-      name: 'price',
-      title: 'Price',
-      type: 'number'
-    },
-    {
-      name: 'description',
-      title: 'Description',
-      type: 'text'
+```typescript
+// Fetch product content from Sanity
+const getProduct = async (slug: string) => {
+  const product = await client.fetch(
+    `
+    *[_type == "product" && slug.current == $slug][0]{
+      name,
+      description,
+      images,
+      "variants": *[_type == "variant" && references(^._id)]
     }
-  ]
-}
+  `,
+    { slug }
+  );
+};
+
+// Get real-time stock from Supabase
+const getProductStock = async (productId: string) => {
+  const { data, error } = await supabase
+    .from("product_variants")
+    .select("*")
+    .eq("product_id", productId);
+};
+
+// Subscribe to stock updates
+const subscribeToStock = (productId: string, callback: Function) => {
+  const subscription = supabase
+    .from(`product_variants:product_id=eq.${productId}`)
+    .on("UPDATE", (payload) => {
+      callback(payload.new);
+    })
+    .subscribe();
+};
 ```
 
----
+## **4. Security Implementation**
 
-### **Order Schema**
-```javascript
-export default {
-  name: 'order',
-  title: 'Order',
-  type: 'document',
-  fields: [
-    {
-      name: 'orderId',
-      title: 'Order ID',
-      type: 'string',
-    },
-    {
-      name: 'customer',
-      title: 'Customer',
-      type: 'reference',
-      to: [{type: 'customer'}]
-    },
-    {
-      name: 'products',
-      title: 'Products',
-      type: 'array',
-      of: [
-        {
-          type: 'object',
-          fields: [
-            {name: 'product', type: 'reference', to: [{type: 'product'}]},
-            {name: 'quantity', type: 'number'},
-            {name: 'price', type: 'number'},
-            {name: 'size', type: 'string'},
-            {name: 'color', type: 'string'}
-          ]
-        }
-      ]
-    },
-    {
-      name: 'totalAmount',
-      title: 'Total Amount',
-      type: 'number'
-    },
-    {
-      name: 'paymentStatus',
-      title: 'Payment Status',
-      type: 'string',
-      options: {
-        list: ['Pending', 'Paid', 'Failed']
-      }
-    },
-    {
-      name: 'shippingAddress',
-      title: 'Shipping Address',
-      type: 'text'
-    },
-    {
-      name: 'shippingMethod',
-      title: 'Shipping Method',
-      type: 'string',
-      options: {
-        list: ['Standard', 'Express']
-      }
-    },
-    {
-      name: 'orderDate',
-      title: 'Order Date',
-      type: 'datetime'
-    },
-    {
-      name: 'deliveryETA',
-      title: 'Delivery ETA',
-      type: 'datetime'
-    }
-  ]
-}
+### **Row Level Security (Supabase)**
+
+```sql
+-- Enable RLS
+ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
+
+-- Define policies
+CREATE POLICY "Users can view own cart"
+ON cart_items FOR SELECT
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own cart"
+ON cart_items FOR INSERT
+WITH CHECK (auth.uid() = user_id);
 ```
 
----
+## **5. Technical Roadmap**
 
-### **Customer Schema**
-```javascript
-export default {
-  name: 'customer',
-  title: 'Customer',
-  type: 'document',
-  fields: [
-    {
-      name: 'customerId',
-      title: 'Customer ID',
-      type: 'string',
-    },
-    {
-      name: 'name',
-      title: 'Full Name',
-      type: 'string',
-    },
-    {
-      name: 'email',
-      title: 'Email',
-      type: 'string',
-    },
-    {
-      name: 'phone',
-      title: 'Phone',
-      type: 'string',
-    },
-    {
-      name: 'address',
-      title: 'Address',
-      type: 'text',
-    },
-    {
-      name: 'sizePreferences',
-      title: 'Size Preferences',
-      type: 'array',
-      of: [{type: 'string'}]
-    },
-    {
-      name: 'stylePreferences',
-      title: 'Style Preferences',
-      type: 'array',
-      of: [{type: 'string'}]
-    },
-    {
-      name: 'orderHistory',
-      title: 'Order History',
-      type: 'array',
-      of: [{type: 'reference', to: [{type: 'order'}]}]
-    }
-  ]
-}
-```
+### Phase 1: Core Infrastructure
 
----
-
-### **Category Schema**
-```javascript
-export default {
-  name: 'category',
-  title: 'Category',
-  type: 'document',
-  fields: [
-    {
-      name: 'name',
-      title: 'Name',
-      type: 'string',
-    },
-    {
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
-      options: {
-        source: 'name'
-      }
-    },
-    {
-      name: 'description',
-      title: 'Description',
-      type: 'text'
-    }
-  ]
-}
-```
-
----
-
-### **Inventory Schema**
-```javascript
-export default {
-  name: 'inventory',
-  title: 'Inventory',
-  type: 'document',
-  fields: [
-    {
-      name: 'product',
-      title: 'Product',
-      type: 'reference',
-      to: [{type: 'product'}]
-    },
-    {
-      name: 'sizeDistribution',
-      title: 'Size Distribution',
-      type: 'array',
-      of: [
-        {
-          type: 'object',
-          fields: [
-            {name: 'size', type: 'string'},
-            {name: 'stock', type: 'number'}
-          ]
-        }
-      ]
-    },
-    {
-      name: 'colorVariants',
-      title: 'Color Variants',
-      type: 'array',
-      of: [{type: 'string'}]
-    },
-    {
-      name: 'location',
-      title: 'Location',
-      type: 'string'
-    },
-    {
-      name: 'reorderLevel',
-      title: 'Reorder Level',
-      type: 'number'
-    },
-    {
-      name: 'lastRestockDate',
-      title: 'Last Restock Date',
-      type: 'datetime'
-    }
-  ]
-}
-```
-
----
-
-### **Shipment Schema**
-```javascript
-export default {
-  name: 'shipment',
-  title: 'Shipment',
-  type: 'document',
-  fields: [
-    {
-      name: 'shipmentId',
-      title: 'Shipment ID',
-      type: 'string',
-    },
-    {
-      name: 'order',
-      title: 'Order',
-      type: 'reference',
-      to: [{type: 'order'}]
-    },
-    {
-      name: 'deliveryZone',
-      title: 'Delivery Zone',
-      type: 'string',
-    },
-    {
-      name: 'status',
-      title: 'Status',
-      type: 'string',
-      options: {
-        list: ['Pending', 'Shipped', 'In Transit', 'Delivered']
-      }
-    },
-    {
-      name: 'deliverySLA',
-      title: 'Delivery SLA',
-      type: 'string',
-    }
-  ]
-}
-```
-
----
-
-## 6. Technical Roadmap
-
-### Phase 1: Core Features
-- **Frontend**:
-  - Implement essential pages: Home, Product Listing, Product Details, Cart, Checkout.
-  - Add responsive design for mobile and desktop.
-- **Backend**:
-  - Set up Sanity CMS for product and order management.
-  - Integrate Stripe for payment processing.
-- **APIs**:
-  - Implement `/api/products` and `/api/orders` endpoints.
+- Set up Supabase project and authentication
+- Configure Sanity CMS for content
+- Implement basic product browsing
+- Set up real-time cart management
 
 ### Phase 2: Enhanced Features
-- **Frontend**:
-  - Add advanced features: size selection, color variants, related products.
-  - Implement user dashboard for order tracking.
-- **Backend**:
-  - Add inventory management and low stock alerts.
-  - Integrate shipment tracking API.
-- **APIs**:
-  - Implement `/api/shipment` and `/api/users` endpoints.
 
-### Phase 3: Optimization and Launch
-- **Performance**:
-  - Optimize images and enable caching.
-  - Use Next.js’s built-in optimizations.
-- **SEO**:
-  - Add meta tags and structured data.
-- **Testing**:
-  - Test for usability, performance, and security.
-- **Launch**:
-  - Deploy on Vercel and monitor performance.
+- Real-time inventory tracking
+- Multi-device cart synchronization
+- Order management system
+- User profiles and preferences
+
+### Phase 3: Advanced Features
+
+- Analytics integration
+- Performance optimization
+- Advanced search capabilities
+- Recommendation engine
+
+## **6. Deployment Strategy**
+
+### Infrastructure
+
+- Next.js deployment on Vercel
+- Sanity Cloud for content
+- Supabase Cloud for operational data
+- CDN for media delivery
+
+### Monitoring
+
+- Supabase Dashboard
+- Sanity metrics
+- Custom logging
+- Error tracking
+
+---
+
+_Created for NextJS Design JAM 2025 Hackathon - Day 2_
